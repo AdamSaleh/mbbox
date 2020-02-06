@@ -1,0 +1,55 @@
+---
+- name: Install openshift dependencies
+  dnf:
+    name: [
+           origin-clients
+          ]
+    state: present
+
+# Setup openshift
+- name: Add insecure-registries entry
+  replace:
+    path: /etc/containers/registries.conf
+    after: 'registries.insecure'
+    before: 'registries.block'
+    regexp: '^(registries =).*$'
+    replace: '\1 ["172.30.0.0/16"]'
+
+- name: Restart registries
+  systemd:
+    state: restarted
+    name: registries
+
+# https://bugzilla.redhat.com/show_bug.cgi?id=1558425
+- name: Add cgroups to docker systemd service
+  replace:
+    path: /usr/lib/systemd/system/docker.service
+    regexp: '(native.cgroupdriver=)systemd'
+    replace: '\1cgroupfs'
+
+- name: Start docker
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: docker
+
+- name: Start cluster
+  command: oc cluster up --enable=[router, registry, web-console]
+
+- name: Add registry
+  command: oc cluster add registry
+
+- name: Create project
+  command: oc new-project mbox
+
+- name: Clone OpenShift ansible
+  git:
+    repo: 'https://github.com/openshift/openshift-ansible'
+    dest: /home/vagrant/openshift-ansible
+    version: release-3.11
+
+- name: Switch to admin user
+  command: oc login -u system:admin
+
+- name: Install PostgreSQL templates
+  command: oc create -f "/home/vagrant/openshift-ansible/roles/openshift_examples/files/examples/x86_64/db-templates" -n openshift
