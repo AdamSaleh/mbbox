@@ -9,6 +9,7 @@ database:
   built_in: ephemeral
 storage:
   mnt_koji_volname: ""
+  persistent_storage: no
 koji_hub:
   public_hostname: koji.mbox.test
   admin_username: admin
