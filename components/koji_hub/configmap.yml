@@ -6,8 +6,6 @@ data:
   start.sh: |-
     mkdir -p /httpdir
     ln -s /usr/lib64/httpd/modules /httpdir/modules
-    ls -la /httpdir/
-    ls -la /httpdir/modules
     truncate --size=0 /httpdir/accesslog /httpdir/errorlog
     tail -qf /httpdir/accesslog /httpdir/errorlog &
     ulimit -c 0
